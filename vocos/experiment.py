@@ -18,20 +18,20 @@ from vocos.modules import safe_log
 class VocosExp(pl.LightningModule):
     # noinspection PyUnusedLocal
     def __init__(
-        self,
-        feature_extractor: FeatureExtractor,
-        backbone: Backbone,
-        head: FourierHead,
-        sample_rate: int,
-        initial_learning_rate: float,
-        num_warmup_steps: int = 0,
-        mel_loss_coeff: float = 45,
-        mrd_loss_coeff: float = 1.0,
-        pretrain_mel_steps: int = 0,
-        decay_mel_coeff: bool = False,
-        evaluate_utmos: bool = False,
-        evaluate_pesq: bool = False,
-        evaluate_periodicty: bool = False,
+            self,
+            feature_extractor: FeatureExtractor,
+            backbone: Backbone,
+            head: FourierHead,
+            sample_rate: int,
+            initial_learning_rate: float,
+            num_warmup_steps: int = 0,
+            mel_loss_coeff: float = 45,
+            mrd_loss_coeff: float = 1.0,
+            pretrain_mel_steps: int = 0,
+            decay_mel_coeff: bool = False,
+            evaluate_utmos: bool = False,
+            evaluate_pesq: bool = False,
+            evaluate_periodicty: bool = False,
     ):
         """
         Args:
@@ -108,8 +108,8 @@ class VocosExp(pl.LightningModule):
             with torch.no_grad():
                 audio_hat = self(audio_input, **kwargs)
 
-            real_score_mp, gen_score_mp, _, _ = self.multiperioddisc(y=audio_input, y_hat=audio_hat, **kwargs,)
-            real_score_mrd, gen_score_mrd, _, _ = self.multiresddisc(y=audio_input, y_hat=audio_hat, **kwargs,)
+            real_score_mp, gen_score_mp, _, _ = self.multiperioddisc(y=audio_input, y_hat=audio_hat, **kwargs, )
+            real_score_mrd, gen_score_mrd, _, _ = self.multiresddisc(y=audio_input, y_hat=audio_hat, **kwargs, )
             loss_mp, loss_mp_real, _ = self.disc_loss(
                 disc_real_outputs=real_score_mp, disc_generated_outputs=gen_score_mp
             )
@@ -151,11 +151,11 @@ class VocosExp(pl.LightningModule):
 
             mel_loss = self.melspec_loss(audio_hat, audio_input)
             loss = (
-                loss_gen_mp
-                + self.hparams.mrd_loss_coeff * loss_gen_mrd
-                + loss_fm_mp
-                + self.hparams.mrd_loss_coeff * loss_fm_mrd
-                + self.mel_loss_coeff * mel_loss
+                    loss_gen_mp
+                    + self.hparams.mrd_loss_coeff * loss_gen_mrd
+                    + loss_fm_mp
+                    + self.hparams.mrd_loss_coeff * loss_fm_mrd
+                    + self.mel_loss_coeff * mel_loss
             )
 
             self.log("generator/total_loss", loss, prog_bar=True)
@@ -314,20 +314,20 @@ class VocosEncodecExp(VocosExp):
     """
 
     def __init__(
-        self,
-        feature_extractor: FeatureExtractor,
-        backbone: Backbone,
-        head: FourierHead,
-        sample_rate: int,
-        initial_learning_rate: float,
-        num_warmup_steps: int,
-        mel_loss_coeff: float = 45,
-        mrd_loss_coeff: float = 1.0,
-        pretrain_mel_steps: int = 0,
-        decay_mel_coeff: bool = False,
-        evaluate_utmos: bool = False,
-        evaluate_pesq: bool = False,
-        evaluate_periodicty: bool = False,
+            self,
+            feature_extractor: FeatureExtractor,
+            backbone: Backbone,
+            head: FourierHead,
+            sample_rate: int,
+            initial_learning_rate: float,
+            num_warmup_steps: int,
+            mel_loss_coeff: float = 45,
+            mrd_loss_coeff: float = 1.0,
+            pretrain_mel_steps: int = 0,
+            decay_mel_coeff: bool = False,
+            evaluate_utmos: bool = False,
+            evaluate_pesq: bool = False,
+            evaluate_periodicty: bool = False,
     ):
         super().__init__(
             feature_extractor,
@@ -349,7 +349,8 @@ class VocosEncodecExp(VocosExp):
         self.multiresddisc = MultiResolutionDiscriminator(num_embeddings=len(self.feature_extractor.bandwidths))
 
     def training_step(self, *args):
-        bandwidth_id = torch.randint(low=0, high=len(self.feature_extractor.bandwidths), size=(1,), device=self.device,)
+        bandwidth_id = torch.randint(low=0, high=len(self.feature_extractor.bandwidths), size=(1,),
+                                     device=self.device, )
         output = super().training_step(*args, bandwidth_id=bandwidth_id)
         return output
 
@@ -364,6 +365,69 @@ class VocosEncodecExp(VocosExp):
             # Resynthesis with encodec for reference
             self.feature_extractor.encodec.set_target_bandwidth(self.feature_extractor.bandwidths[0])
             encodec_audio = self.feature_extractor.encodec(audio_in[None, None, :])
+            self.logger.experiment.add_audio(
+                "encodec", encodec_audio[0, 0].data.cpu().numpy(), self.global_step, self.hparams.sample_rate,
+            )
+
+        super().validation_epoch_end(outputs)
+
+
+class VocosSnacExp(VocosExp):
+    """
+    VocosEncodecExp is a subclass of VocosExp that overrides the parent experiment to function as a conditional GAN.
+    It manages an additional `bandwidth_id` attribute, which denotes a learnable embedding corresponding to
+    a specific bandwidth value of EnCodec. During training, a random bandwidth_id is generated for each step,
+    while during validation, a fixed bandwidth_id is used.
+    """
+
+    def __init__(
+            self,
+            feature_extractor: FeatureExtractor,
+            backbone: Backbone,
+            head: FourierHead,
+            sample_rate: int,
+            initial_learning_rate: float,
+            num_warmup_steps: int,
+            mel_loss_coeff: float = 45,
+            mrd_loss_coeff: float = 1.0,
+            pretrain_mel_steps: int = 0,
+            decay_mel_coeff: bool = False,
+            evaluate_utmos: bool = False,
+            evaluate_pesq: bool = False,
+            evaluate_periodicty: bool = False,
+    ):
+        super().__init__(
+            feature_extractor,
+            backbone,
+            head,
+            sample_rate,
+            initial_learning_rate,
+            num_warmup_steps,
+            mel_loss_coeff,
+            mrd_loss_coeff,
+            pretrain_mel_steps,
+            decay_mel_coeff,
+            evaluate_utmos,
+            evaluate_pesq,
+            evaluate_periodicty,
+        )
+        # Override with conditional discriminators
+        self.multiperioddisc = MultiPeriodDiscriminator(num_embeddings=len(self.feature_extractor.bandwidths))
+        self.multiresddisc = MultiResolutionDiscriminator(num_embeddings=len(self.feature_extractor.bandwidths))
+
+    def training_step(self, *args):
+        output = super().training_step(*args)
+        return output
+
+    def validation_step(self, *args):
+        output = super().validation_step(*args)
+        return output
+
+    def validation_epoch_end(self, outputs):
+        if self.global_rank == 0:
+            *_, audio_in, _ = outputs[0].values()
+            # Resynthesis with encodec for reference
+            encodec_audio, _ = self.feature_extractor.snac_model(audio_in[None, None, :])
             self.logger.experiment.add_audio(
                 "encodec", encodec_audio[0, 0].data.cpu().numpy(), self.global_step, self.hparams.sample_rate,
             )

@@ -6,6 +6,7 @@ from encodec import EncodecModel
 from torch import nn
 
 from vocos.modules import safe_log
+from snac import SNAC
 
 
 class FeatureExtractor(nn.Module):
@@ -51,10 +52,10 @@ class MelSpectrogramFeatures(FeatureExtractor):
 
 class EncodecFeatures(FeatureExtractor):
     def __init__(
-        self,
-        encodec_model: str = "encodec_24khz",
-        bandwidths: List[float] = [1.5, 3.0, 6.0, 12.0],
-        train_codebooks: bool = False,
+            self,
+            encodec_model: str = "encodec_24khz",
+            bandwidths: List[float] = [1.5, 3.0, 6.0, 12.0],
+            train_codebooks: bool = False,
     ):
         super().__init__()
         if encodec_model == "encodec_24khz":
@@ -97,3 +98,36 @@ class EncodecFeatures(FeatureExtractor):
         embeddings_idxs = codes + offsets.view(-1, 1, 1)
         features = torch.nn.functional.embedding(embeddings_idxs, self.codebook_weights).sum(dim=0)
         return features.transpose(1, 2)
+
+
+class SnacFeatures(FeatureExtractor):
+    def __init__(
+            self,
+            snac_model: str = "hubertsiuzdak/snac_24khz",
+    ):
+        super().__init__()
+
+        self.snac_model = SNAC.from_pretrained(snac_model).eval()
+        for param in self.snac_model.parameters():
+            param.requires_grad = False
+
+    @torch.no_grad()
+    def get_snac_features(self, audio_data):
+        audio_data = audio_data[:, None, :]
+        audio_data = self.snac_model.preprocess(audio_data)
+        z = self.snac_model.encoder(audio_data)
+        z_q, codes = self.snac_model.quantizer(z)
+        return z_q
+
+    def forward(self, audio: torch.Tensor, **kwargs):
+        self.snac_model.eval()  # Force eval mode as Pytorch Lightning automatically sets child modules to training mode
+        features = self.get_snac_features(audio)
+        return features
+
+
+if __name__ == '__main__':
+    m1 = EncodecFeatures()
+    m2 = SnacFeatures()
+    audio = torch.rand(1,24000*20).to(torch.float32)
+    print(m1(audio,bandwidth_id=0 ).shape)
+    print(m2(audio).shape)
