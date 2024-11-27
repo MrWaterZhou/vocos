@@ -380,6 +380,13 @@ class VocosSnacExp(VocosExp):
     while during validation, a fixed bandwidth_id is used.
     """
 
+    """
+    VocosEncodecExp is a subclass of VocosExp that overrides the parent experiment to function as a conditional GAN.
+    It manages an additional `bandwidth_id` attribute, which denotes a learnable embedding corresponding to
+    a specific bandwidth value of EnCodec. During training, a random bandwidth_id is generated for each step,
+    while during validation, a fixed bandwidth_id is used.
+    """
+
     def __init__(
             self,
             feature_extractor: FeatureExtractor,
@@ -412,22 +419,24 @@ class VocosSnacExp(VocosExp):
             evaluate_periodicty,
         )
         # Override with conditional discriminators
-        self.multiperioddisc = MultiPeriodDiscriminator(num_embeddings=len(self.feature_extractor.bandwidths))
-        self.multiresddisc = MultiResolutionDiscriminator(num_embeddings=len(self.feature_extractor.bandwidths))
+        self.multiperioddisc = MultiPeriodDiscriminator(num_embeddings=1)
+        self.multiresddisc = MultiResolutionDiscriminator(num_embeddings=1)
 
     def training_step(self, *args):
-        output = super().training_step(*args)
+        bandwidth_id = torch.tensor([0], device=self.device)
+        output = super().training_step(*args, bandwidth_id=bandwidth_id)
         return output
 
     def validation_step(self, *args):
-        output = super().validation_step(*args)
+        bandwidth_id = torch.tensor([0], device=self.device)
+        output = super().validation_step(*args, bandwidth_id=bandwidth_id)
         return output
 
     def validation_epoch_end(self, outputs):
         if self.global_rank == 0:
             *_, audio_in, _ = outputs[0].values()
             # Resynthesis with encodec for reference
-            encodec_audio, _ = self.feature_extractor.snac_model(audio_in[None, None, :])
+            encodec_audio, _ = self.feature_extractor.sanc_model(audio_in[None, None, :])
             self.logger.experiment.add_audio(
                 "encodec", encodec_audio[0, 0].data.cpu().numpy(), self.global_step, self.hparams.sample_rate,
             )
