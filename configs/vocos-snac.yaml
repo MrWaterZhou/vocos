@@ -5,14 +5,14 @@ data:
   class_path: vocos.dataset.VocosDataModule
   init_args:
     train_params:
-      filelist_path: ???
+      filelist_path: /home/zhou/data3/tts/vocos/dataset/train.txt
       sampling_rate: 24000
       num_samples: 24000
       batch_size: 16
       num_workers: 8
 
     val_params:
-      filelist_path: ???
+      filelist_path: /home/zhou/data3/tts/vocos/dataset/eval.txt
       sampling_rate: 24000
       num_samples: 24000
       batch_size: 16
@@ -36,7 +36,7 @@ model:
     feature_extractor:
       class_path: vocos.feature_extractors.SnacFeatures
       init_args:
-        encodec_model: hubertsiuzdak/snac_24khz
+        snac_model: hubertsiuzdak/snac_24khz
 
     backbone:
       class_path: vocos.models.VocosBackbone
