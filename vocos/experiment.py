@@ -436,7 +436,7 @@ class VocosSnacExp(VocosExp):
         if self.global_rank == 0:
             *_, audio_in, _ = outputs[0].values()
             # Resynthesis with encodec for reference
-            encodec_audio, _ = self.feature_extractor.sanc_model(audio_in[None, None, :])
+            encodec_audio, _ = self.feature_extractor.snac_model(audio_in[None, None, :])
             self.logger.experiment.add_audio(
                 "encodec", encodec_audio[0, 0].data.cpu().numpy(), self.global_step, self.hparams.sample_rate,
             )
