@@ -10,6 +10,7 @@ from vocos.feature_extractors import FeatureExtractor, EncodecFeatures
 from vocos.heads import FourierHead
 from vocos.models import Backbone
 import os
+import numpy as np
 
 
 def instantiate_class(args: Union[Any, Tuple[Any, ...]], init: Dict[str, Any]) -> Any:
@@ -227,3 +228,27 @@ class SnacVocos(nn.Module):
         z_q = self.feature_extractor.snac_model.quantizer.from_codes(codes)
         audio_hat = self.decoder(z_q)
         return audio_hat
+
+    @torch.inference_mode()
+    def split_sequence(self, sequence):
+        group_size = 7
+        first_elements = []
+        second_elements = []
+        third_elements = []
+
+        # Iterate over the sequence in chunks of 7
+        for i in range(0, len(sequence), group_size):
+            group = sequence[i:i + group_size]
+
+            # Add elements to the respective lists based on their position in the group
+            if len(group) >= 1:
+                first_elements.append(group[0])
+            if len(group) >= 5:
+                second_elements.extend([group[1], group[4]])
+            if len(group) >= 7:
+                third_elements.extend([group[2], group[3], group[5], group[6]])
+            else:
+                third_elements.extend(group[2:])
+        codes = [torch.from_numpy(np.array(x).astype(np.int32)[None,]).cuda() for x in
+                 [first_elements, second_elements, third_elements]]
+        return self.codes_to_audio(codes)
