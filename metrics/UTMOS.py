@@ -7,8 +7,8 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
-UTMOS_CKPT_URL = "https://huggingface.co/spaces/sarulab-speech/UTMOS-demo/resolve/main/epoch%3D3-step%3D7459.ckpt"
-WAV2VEC_URL = "https://huggingface.co/spaces/sarulab-speech/UTMOS-demo/resolve/main/wav2vec_small.pt"
+UTMOS_CKPT_URL = "https://hf-mirror.com/spaces/sarulab-speech/UTMOS-demo/resolve/main/epoch%3D3-step%3D7459.ckpt"
+WAV2VEC_URL = "https://hf-mirror.com/spaces/sarulab-speech/UTMOS-demo/resolve/main/wav2vec_small.pt"
 
 """
 UTMOS score, automatic Mean Opinion Score (MOS) prediction system, 
