@@ -76,7 +76,7 @@ def download_file(url, filename):
     progress_bar.close()
 
 
-def load_ssl_model(ckpt_path="wav2vec_small.pt"):
+def load_ssl_model(ckpt_path="/home/zhou/data3/tts/vocos/wav2vec_small.pt"):
     filepath = os.path.join(os.path.dirname(__file__), ckpt_path)
     if not os.path.exists(filepath):
         download_file(WAV2VEC_URL, filepath)
