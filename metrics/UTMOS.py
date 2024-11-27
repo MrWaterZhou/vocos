@@ -19,7 +19,7 @@ adapted from https://huggingface.co/spaces/sarulab-speech/UTMOS-demo
 class UTMOSScore:
     """Predicting score for each audio clip."""
 
-    def __init__(self, device, ckpt_path="epoch=3-step=7459.ckpt"):
+    def __init__(self, device, ckpt_path="/home/zhou/data3/tts/vocos/epoch=3-step=7459.ckpt"):
         self.device = device
         filepath = os.path.join(os.path.dirname(__file__), ckpt_path)
         if not os.path.exists(filepath):
