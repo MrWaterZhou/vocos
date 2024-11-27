@@ -36,7 +36,7 @@ model:
     feature_extractor:
       class_path: vocos.feature_extractors.SnacFeatures
       init_args:
-        encodec_model: hubertsiuzdak/snac_24khz
+        snac_model: hubertsiuzdak/snac_24khz
 
     backbone:
       class_path: vocos.models.VocosBackbone
