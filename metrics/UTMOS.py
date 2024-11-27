@@ -77,7 +77,7 @@ def download_file(url, filename):
 
 
 def load_ssl_model(ckpt_path="/home/zhou/data3/tts/vocos/wav2vec_small.pt"):
-    filepath = os.path.join(os.path.dirname(__file__), ckpt_path)
+    filepath = ckpt_path
     if not os.path.exists(filepath):
         download_file(WAV2VEC_URL, filepath)
     SSL_OUT_DIM = 768
