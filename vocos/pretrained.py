@@ -228,7 +228,7 @@ class SnacVocos(nn.Module):
 
         z_q = self.feature_extractor.snac_model.quantizer.from_codes(codes)
         bandwidth_id = torch.tensor([0]).to(z_q.device)
-        audio_hat = self.head(self.backbone(z_q, bandwidth_id=bandwidth_id), bandwidth_id=bandwidth_id)
+        audio_hat = self.head(self.backbone(z_q, bandwidth_id=bandwidth_id))
         return audio_hat
 
     @torch.inference_mode()
