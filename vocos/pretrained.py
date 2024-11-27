@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple, Union, Optional
+from typing import Any, Dict, Tuple, Union, Optional, List
 
 import torch
 import yaml
@@ -9,6 +9,7 @@ from torch import nn
 from vocos.feature_extractors import FeatureExtractor, EncodecFeatures
 from vocos.heads import FourierHead
 from vocos.models import Backbone
+import os
 
 
 def instantiate_class(args: Union[Any, Tuple[Any, ...]], init: Dict[str, Any]) -> Any:
@@ -39,7 +40,7 @@ class Vocos(nn.Module):
     """
 
     def __init__(
-        self, feature_extractor: FeatureExtractor, backbone: Backbone, head: FourierHead,
+            self, feature_extractor: FeatureExtractor, backbone: Backbone, head: FourierHead,
     ):
         super().__init__()
         self.feature_extractor = feature_extractor
@@ -141,3 +142,88 @@ class Vocos(nn.Module):
         features = features.transpose(1, 2)
 
         return features
+
+
+class SnacVocos(nn.Module):
+    """
+    The Vocos class represents a Fourier-based neural vocoder for audio synthesis.
+    This class is primarily designed for inference, with support for loading from pretrained
+    model checkpoints. It consists of three main components: a feature extractor,
+    a backbone, and a head.
+    """
+
+    def __init__(
+            self, feature_extractor: FeatureExtractor, backbone: Backbone, head: FourierHead,
+    ):
+        super().__init__()
+        self.feature_extractor = feature_extractor
+        self.backbone = backbone
+        self.head = head
+
+    @classmethod
+    def from_hparams(cls, config_path: str) -> SnacVocos:
+        """
+        Class method to create a new Vocos model instance from hyperparameters stored in a yaml configuration file.
+        """
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+        feature_extractor = instantiate_class(args=(), init=config['model']['init_args']["feature_extractor"])
+        backbone = instantiate_class(args=(), init=config['model']['init_args']["backbone"])
+        head = instantiate_class(args=(), init=config['model']['init_args']["head"])
+        model = cls(feature_extractor=feature_extractor, backbone=backbone, head=head)
+        return model
+
+    @classmethod
+    def from_pretrained(cls, repo_id: str, revision: Optional[str] = None) -> SnacVocos:
+        """
+        Class method to create a new Vocos model instance from a pre-trained model stored in the Hugging Face model hub.
+        """
+        config_path = os.path.join(repo_id, "config.yaml")
+        model_path = os.path.join(repo_id, "checkpoints/last.ckpt")
+        model = cls.from_hparams(config_path)
+        state_dict = torch.load(model_path, map_location="cpu")
+        weights = state_dict['state_dict']
+        model.load_state_dict(weights, strict=False)
+        model.eval()
+        return model
+
+    @torch.inference_mode()
+    def forward(self, audio_input: torch.Tensor, **kwargs: Any) -> torch.Tensor:
+        """
+        Method to run a copy-synthesis from audio waveform. The feature extractor first processes the audio input,
+        which is then passed through the backbone and the head to reconstruct the audio output.
+
+        Args:
+            audio_input (Tensor): The input tensor representing the audio waveform of shape (B, T),
+                                        where B is the batch size and L is the waveform length.
+
+
+        Returns:
+            Tensor: The output tensor representing the reconstructed audio waveform of shape (B, T).
+        """
+        features = self.feature_extractor(audio_input, **kwargs)
+        audio_output = self.decode(features, **kwargs)
+        return audio_output
+
+    @torch.inference_mode()
+    def decode(self, features_input: torch.Tensor, **kwargs: Any) -> torch.Tensor:
+        """
+        Method to decode audio waveform from already calculated features. The features input is passed through
+        the backbone and the head to reconstruct the audio output.
+
+        Args:
+            features_input (Tensor): The input tensor of features of shape (B, C, L), where B is the batch size,
+                                     C denotes the feature dimension, and L is the sequence length.
+
+        Returns:
+            Tensor: The output tensor representing the reconstructed audio waveform of shape (B, T).
+        """
+        x = self.backbone(features_input, **kwargs)
+        audio_output = self.head(x)
+        return audio_output
+
+    @torch.inference_mode()
+    def codes_to_audio(self, codes: List[torch.Tensor]) -> torch.Tensor:
+        z_q = self.feature_extractor.snac_model.quantizer.from_codes(codes)
+        audio_hat = self.decoder(z_q)
+        return audio_hat
