@@ -226,7 +226,7 @@ class SnacVocos(nn.Module):
     @torch.inference_mode()
     def codes_to_audio(self, codes: List[torch.Tensor]) -> torch.Tensor:
         z_q = self.feature_extractor.snac_model.quantizer.from_codes(codes)
-        audio_hat = self.decoder(z_q)
+        audio_hat = self.head(self.backbone(z_q))
         return audio_hat
 
     @torch.inference_mode()
