@@ -127,22 +127,11 @@ def test():
                 output_ids = [int(tokenizer.convert_ids_to_tokens(x).replace('<|speech-', '').replace('|>', '')) for x
                               in
                               z]
-                # first_elements, second_elements, third_elements = split_sequence(output_ids)
-                # codes = [torch.from_numpy(np.array(x).astype(np.int32)[None,]).to('cuda') for x in
-                #          [first_elements, second_elements, third_elements]]
-
                 with torch.no_grad():
                     audio_hat_all = snac_model.split_sequence(output_ids)
                     torchaudio.save('test_{}.wav'.format(i), audio_hat_all.cpu(), 24000)
-                id_list = sliding_window(output_ids)
-                pcm_list = []
-                z_q_list = []
-                for i, l in enumerate(id_list):
-                    audio_hat, z_q = decode(l)
-                    pcm_list.append(audio_hat)
-                    z_q_list.append(z_q)
-            except:
-                print('error')
+            except Exception as e:
+                print(e)
 
 
 if __name__ == '__main__':
