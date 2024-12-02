@@ -36,7 +36,7 @@ def sliding_window(data, window_size=7, step=7):
 def test():
     from datasets import load_dataset
     snac_model = SnacVocos.from_pretrained('/home/zhou/data3/tts/vocos/logs/lightning_logs/version_1').eval().to('cuda')
-    ds = load_dataset('json', sys.argv[1], split='train').take(100)
+    ds = load_dataset('json', data_files=sys.argv[1], split='train').take(100)
     for i, target_id in enumerate(ds['target']):
         audio_hat_all = snac_model.split_sequence(target_id)
         torchaudio.save('test_{}.wav'.format(i), audio_hat_all.cpu(), 24000)
