@@ -204,11 +204,13 @@ class CosyvoiceFeatures(FeatureExtractor):
             onnx_model: str = "/home/zhou/data3/tts/CosyVoice/pretrained_models/CosyVoice2-0.5B/speech_tokenizer_v2.onnx",
     ):
         super().__init__()
-        self.tokenizer_model = ONNXMultiInputDynamicWrapper(onnx_model)
+        self.tokenizer_model = None
         self.codebook = nn.Embedding(6561, 768)
+        self.onnx_model = onnx_model
 
     @torch.no_grad()
     def get_codes(self, audio_data):
+        self.tokenizer_model = ONNXMultiInputDynamicWrapper(self.onnx_model)
         feats = whisper.log_mel_spectrogram(audio_data, n_mels=128)
         feats_length = np.array([feats.shape[2]], dtype=np.int32)
         feats_length = torch.from_numpy(feats_length).to(audio_data.device)
