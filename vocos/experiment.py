@@ -442,3 +442,67 @@ class VocosSnacExp(VocosExp):
             )
 
         super().validation_epoch_end(outputs)
+
+
+class VocosCosyvoiceExp(VocosExp):
+    """
+    VocosEncodecExp is a subclass of VocosExp that overrides the parent experiment to function as a conditional GAN.
+    It manages an additional `bandwidth_id` attribute, which denotes a learnable embedding corresponding to
+    a specific bandwidth value of EnCodec. During training, a random bandwidth_id is generated for each step,
+    while during validation, a fixed bandwidth_id is used.
+    """
+
+    """
+    VocosEncodecExp is a subclass of VocosExp that overrides the parent experiment to function as a conditional GAN.
+    It manages an additional `bandwidth_id` attribute, which denotes a learnable embedding corresponding to
+    a specific bandwidth value of EnCodec. During training, a random bandwidth_id is generated for each step,
+    while during validation, a fixed bandwidth_id is used.
+    """
+
+    def __init__(
+            self,
+            feature_extractor: FeatureExtractor,
+            backbone: Backbone,
+            head: FourierHead,
+            sample_rate: int,
+            initial_learning_rate: float,
+            num_warmup_steps: int,
+            mel_loss_coeff: float = 45,
+            mrd_loss_coeff: float = 1.0,
+            pretrain_mel_steps: int = 0,
+            decay_mel_coeff: bool = False,
+            evaluate_utmos: bool = False,
+            evaluate_pesq: bool = False,
+            evaluate_periodicty: bool = False,
+    ):
+        super().__init__(
+            feature_extractor,
+            backbone,
+            head,
+            sample_rate,
+            initial_learning_rate,
+            num_warmup_steps,
+            mel_loss_coeff,
+            mrd_loss_coeff,
+            pretrain_mel_steps,
+            decay_mel_coeff,
+            evaluate_utmos,
+            evaluate_pesq,
+            evaluate_periodicty,
+        )
+        # Override with conditional discriminators
+        self.multiperioddisc = MultiPeriodDiscriminator(num_embeddings=1)
+        self.multiresddisc = MultiResolutionDiscriminator(num_embeddings=1)
+
+    def training_step(self, *args):
+        bandwidth_id = torch.tensor([0], device=self.device)
+        output = super().training_step(*args, bandwidth_id=bandwidth_id)
+        return output
+
+    def validation_step(self, *args):
+        bandwidth_id = torch.tensor([0], device=self.device)
+        output = super().validation_step(*args, bandwidth_id=bandwidth_id)
+        return output
+
+    def validation_epoch_end(self, outputs):
+        super().validation_epoch_end(outputs)

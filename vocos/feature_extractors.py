@@ -1,12 +1,85 @@
 from typing import List
 
+import numpy as np
+import onnxruntime as ort
 import torch
+import torch.nn as nn
 import torchaudio
 from encodec import EncodecModel
-from torch import nn
-
-from vocos.modules import safe_log
 from snac import SNAC
+import whisper
+from vocos.modules import safe_log
+
+
+class ONNXMultiInputDynamicWrapper(nn.Module):
+    def __init__(self, onnx_model_path, device="cuda"):
+        """
+        使用 ONNX Runtime 的 IO Binding 处理多个输入和动态输出。
+        :param onnx_model_path: ONNX 模型文件路径
+        :param device: 指定设备 ('cuda' 或 'cpu')
+        """
+        super(ONNXMultiInputDynamicWrapper, self).__init__()
+        device_id = torch.cuda.current_device()
+
+        # 初始化 ONNX Runtime session
+        providers = [('CUDAExecutionProvider', {'device_id': device_id})]
+        self.session = ort.InferenceSession(onnx_model_path, providers=providers)
+
+        # 获取输入和输出名称
+        self.input_names = [inp.name for inp in self.session.get_inputs()]  # 获取两个输入
+        self.output_names = [out.name for out in self.session.get_outputs()]  # 获取输出
+
+        # 推理设备
+        self.device = device
+        self.io_binding = self.session.io_binding()
+
+    def forward(self, feats: torch.Tensor, feats_length: torch.Tensor):
+        """
+        处理两个输入张量并生成动态输出张量。
+        :param feats: PyTorch Tensor, (1, 128, -1), float32
+        :param feats_length: PyTorch Tensor, (1), int32
+        :return: 输出 Tensor (1, -1), int32
+        """
+        # 确保输入 Tensor 在正确设备上
+        feats = feats.to(self.device)
+        feats_length = feats_length.to(self.device)
+
+        # 绑定输入 feats
+        self.io_binding.bind_input(
+            name=self.input_names[0],  # 假设第一个输入是 feats
+            device_type=self.device,
+            device_id=0,
+            element_type=np.float32,
+            shape=tuple(feats.shape),
+            buffer_ptr=feats.data_ptr()
+        )
+
+        # 绑定输入 feats_length
+        self.io_binding.bind_input(
+            name=self.input_names[1],  # 假设第二个输入是 feats_length
+            device_type=self.device,
+            device_id=0,
+            element_type=np.int32,
+            shape=tuple(feats_length.shape),
+            buffer_ptr=feats_length.data_ptr()
+        )
+
+        # 动态分配输出 Tensor（在 CUDA 上）
+        output_tensor = torch.empty((1, feats.shape[-1] // 4), dtype=torch.int32, device='cuda:0').contiguous()
+        self.io_binding.bind_output(
+            name='indices',
+            device_type='cuda',
+            device_id=0,
+            element_type=np.int32,
+            shape=tuple(output_tensor.shape),
+            buffer_ptr=output_tensor.data_ptr(),
+        )
+
+        # 执行推理
+        self.session.run_with_iobinding(self.io_binding)
+
+        # 输出 Tensor 已在 CUDA 上
+        return output_tensor
 
 
 class FeatureExtractor(nn.Module):
@@ -125,9 +198,31 @@ class SnacFeatures(FeatureExtractor):
         return features
 
 
+class CosyvoiceFeatures(FeatureExtractor):
+    def __init__(
+            self,
+            onnx_model: str = "/home/zhou/data3/tts/CosyVoice/pretrained_models/CosyVoice2-0.5B/speech_tokenizer_v2.onnx",
+    ):
+        super().__init__()
+        self.tokenizer_model = ONNXMultiInputDynamicWrapper(onnx_model)
+        self.codebook = nn.Embedding(6561, 768)
+
+    @torch.no_grad()
+    def get_codes(self, audio_data):
+        feats = whisper.log_mel_spectrogram(audio_data, n_mels=128)
+        feats_length = np.array([feats.shape[2]], dtype=np.int32)
+        codes = self.tokenizer_model(feats, feats_length)
+        return codes
+
+    def forward(self, audio: torch.Tensor, **kwargs):
+        codes = self.get_codes(audio)
+        features = torch.nn.functional.embedding(codes, self.codebook.weight)
+        return features
+
+
 if __name__ == '__main__':
     m1 = EncodecFeatures()
     m2 = SnacFeatures()
-    audio = torch.rand(1,24000*20).to(torch.float32)
-    print(m1(audio,bandwidth_id=0 ).shape)
+    audio = torch.rand(1, 24000).to(torch.float32)
+    print(m1(audio, bandwidth_id=0).shape)
     print(m2(audio).shape)
