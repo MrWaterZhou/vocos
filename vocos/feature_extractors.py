@@ -12,7 +12,7 @@ from vocos.modules import safe_log
 
 
 class ONNXMultiInputDynamicWrapper(nn.Module):
-    def __init__(self, onnx_model_path, device="cuda"):
+    def __init__(self, onnx_model_path):
         """
         使用 ONNX Runtime 的 IO Binding 处理多个输入和动态输出。
         :param onnx_model_path: ONNX 模型文件路径
@@ -30,7 +30,7 @@ class ONNXMultiInputDynamicWrapper(nn.Module):
         self.output_names = [out.name for out in self.session.get_outputs()]  # 获取输出
 
         # 推理设备
-        self.device = device
+        self.device = device_id
         self.io_binding = self.session.io_binding()
 
     def forward(self, feats: torch.Tensor, feats_length: torch.Tensor):
