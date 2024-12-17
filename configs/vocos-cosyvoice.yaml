@@ -8,8 +8,8 @@ data:
       filelist_path: /home/zhou/data3/tts/vocos/dataset/train.txt
       sampling_rate: 16000
       num_samples: 16000
-      batch_size: 1
-      num_workers: 1
+      batch_size: 8
+      num_workers: 8
 
     val_params:
       filelist_path: /home/zhou/data3/tts/vocos/dataset/eval.txt
