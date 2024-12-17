@@ -30,7 +30,7 @@ class ONNXMultiInputDynamicWrapper(nn.Module):
         self.output_names = [out.name for out in self.session.get_outputs()]  # 获取输出
 
         # 推理设备
-        self.device = device_id
+        self.device = f'cuda:{device_id}'
         self.io_binding = self.session.io_binding()
 
     def forward(self, feats: torch.Tensor, feats_length: torch.Tensor):
