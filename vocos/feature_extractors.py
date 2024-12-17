@@ -47,7 +47,7 @@ class ONNXMultiInputDynamicWrapper(nn.Module):
         # 绑定输入 feats
         self.io_binding.bind_input(
             name=self.input_names[0],  # 假设第一个输入是 feats
-            device_type=self.device,
+            device_type='cuda',
             device_id=0,
             element_type=np.float32,
             shape=tuple(feats.shape),
@@ -57,7 +57,7 @@ class ONNXMultiInputDynamicWrapper(nn.Module):
         # 绑定输入 feats_length
         self.io_binding.bind_input(
             name=self.input_names[1],  # 假设第二个输入是 feats_length
-            device_type=self.device,
+            device_type='cuda',
             device_id=0,
             element_type=np.int32,
             shape=tuple(feats_length.shape),
@@ -65,7 +65,7 @@ class ONNXMultiInputDynamicWrapper(nn.Module):
         )
 
         # 动态分配输出 Tensor（在 CUDA 上）
-        output_tensor = torch.empty((1, feats.shape[-1] // 4), dtype=torch.int32, device='cuda:0').contiguous()
+        output_tensor = torch.empty((1, feats.shape[-1] // 4), dtype=torch.int32, device=self.device).contiguous()
         self.io_binding.bind_output(
             name='indices',
             device_type='cuda',
