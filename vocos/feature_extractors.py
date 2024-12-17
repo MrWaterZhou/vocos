@@ -218,7 +218,7 @@ class CosyvoiceFeatures(FeatureExtractor):
     def forward(self, audio: torch.Tensor, **kwargs):
         codes = self.get_codes(audio)
         features = torch.nn.functional.embedding(codes, self.codebook.weight)
-        return features
+        return features.transpose(1,2)
 
 
 if __name__ == '__main__':
