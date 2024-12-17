@@ -215,7 +215,11 @@ class CosyvoiceFeatures(FeatureExtractor):
         feats = whisper.log_mel_spectrogram(audio_data, n_mels=128)
         feats_length = np.array([feats.shape[2]], dtype=np.int32)
         feats_length = torch.from_numpy(feats_length).to(audio_data.device)
-        codes = self.tokenizer_model(feats, feats_length)
+        codes = []
+        for x in feats:
+            y = self.tokenizer_model(x[None], feats_length)
+            codes.append(y)
+        codes = torch.cat(codes)
         return codes
 
     def forward(self, audio: torch.Tensor, **kwargs):
