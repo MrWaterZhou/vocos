@@ -210,7 +210,8 @@ class CosyvoiceFeatures(FeatureExtractor):
 
     @torch.no_grad()
     def get_codes(self, audio_data):
-        self.tokenizer_model = ONNXMultiInputDynamicWrapper(self.onnx_model)
+        if self.tokenizer_model is None:
+            self.tokenizer_model = ONNXMultiInputDynamicWrapper(self.onnx_model)
         feats = whisper.log_mel_spectrogram(audio_data, n_mels=128)
         feats_length = np.array([feats.shape[2]], dtype=np.int32)
         feats_length = torch.from_numpy(feats_length).to(audio_data.device)
