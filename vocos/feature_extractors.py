@@ -212,7 +212,7 @@ class CosyvoiceFeatures(FeatureExtractor):
     def get_codes(self, audio_data):
         if self.tokenizer_model is None:
             self.tokenizer_model = ONNXMultiInputDynamicWrapper(self.onnx_model)
-        audio_data = torchaudio.functional.resample(audio_data,24000,16000)
+        audio_data = torchaudio.functional.resample(audio_data, 24000, 16000)
         feats = whisper.log_mel_spectrogram(audio_data, n_mels=128)
         feats_length = np.array([feats.shape[2]], dtype=np.int32)
         feats_length = torch.from_numpy(feats_length).to(audio_data.device)
@@ -226,7 +226,7 @@ class CosyvoiceFeatures(FeatureExtractor):
     def forward(self, audio: torch.Tensor, **kwargs):
         codes = self.get_codes(audio)
         features = torch.nn.functional.embedding(codes, self.codebook.weight)
-        return features.transpose(1,2)
+        return features.transpose(1, 2)
 
 
 if __name__ == '__main__':
