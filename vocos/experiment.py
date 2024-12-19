@@ -494,15 +494,5 @@ class VocosCosyvoiceExp(VocosExp):
         self.multiperioddisc = MultiPeriodDiscriminator(num_embeddings=1)
         self.multiresddisc = MultiResolutionDiscriminator(num_embeddings=1)
 
-    def training_step(self, *args):
-        bandwidth_id = torch.tensor([0], device=self.device)
-        output = super().training_step(*args, bandwidth_id=bandwidth_id)
-        return output
-
-    def validation_step(self, *args):
-        bandwidth_id = torch.tensor([0], device=self.device)
-        output = super().validation_step(*args, bandwidth_id=bandwidth_id)
-        return output
-
     def validation_epoch_end(self, outputs):
         super().validation_epoch_end(outputs)

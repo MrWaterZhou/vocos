@@ -6,6 +6,7 @@ from torchaudio.functional.functional import _hz_to_mel, _mel_to_hz
 
 from vocos.spectral_ops import IMDCT, ISTFT
 from vocos.modules import symexp
+from snac.snac import Decoder
 
 
 class FourierHead(nn.Module):
@@ -21,6 +22,18 @@ class FourierHead(nn.Module):
             Tensor: Reconstructed time-domain audio signal of shape (B, T), where T is the length of the output signal.
         """
         raise NotImplementedError("Subclasses must implement the forward method.")
+
+
+class SnacHead(FourierHead):
+    def __int__(self, input_channel=768, channels=1024, rates=[8, 6, 5, 4], noise=False, depthwise=True,
+                attn_window_size=5):
+        super().__init__()
+        self.decoder = Decoder(input_channel=input_channel, channels=channels, rates=rates, noise=noise,
+                               depthwise=depthwise,
+                               attn_window_size=attn_window_size, d_out=1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.decoder(x)[:, 0, :]
 
 
 class ISTFTHead(FourierHead):
@@ -83,12 +96,12 @@ class IMDCTSymExpHead(FourierHead):
     """
 
     def __init__(
-        self,
-        dim: int,
-        mdct_frame_len: int,
-        padding: str = "same",
-        sample_rate: Optional[int] = None,
-        clip_audio: bool = False,
+            self,
+            dim: int,
+            mdct_frame_len: int,
+            padding: str = "same",
+            sample_rate: Optional[int] = None,
+            clip_audio: bool = False,
     ):
         super().__init__()
         out_dim = mdct_frame_len // 2

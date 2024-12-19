@@ -37,23 +37,24 @@ model:
       class_path: vocos.feature_extractors.CosyvoiceFeatures
       init_args:
         onnx_model: /home/zhou/data3/tts/CosyVoice/pretrained_models/CosyVoice2-0.5B/speech_tokenizer_v2.onnx
-
     backbone:
       class_path: vocos.models.VocosBackbone
       init_args:
         input_channels: 768
-        dim: 384
+        dim: 768
         intermediate_dim: 1152
         num_layers: 8
-        adanorm_num_embeddings: 1  # len(bandwidths)
-
+        adanorm_num_embeddings: 0  # len(bandwidths)
     head:
-      class_path: vocos.heads.ISTFTHead
+      class_path: vocos.heads.SnacHead
       init_args:
-        dim: 384
-        n_fft: 2560
-        hop_length: 640
-        padding: same
+        input_channel: 768
+        channels: 1024
+        rates: [8, 6, 5, 4]
+        noise: False
+        depthwise: True
+        attn_window_size: 5
+
 
 trainer:
   logger:
@@ -80,5 +81,5 @@ trainer:
   limit_val_batches: 30
   accelerator: gpu
   strategy: ddp
-  devices: [0,1]
+  devices: [ 0,1 ]
   log_every_n_steps: 100
