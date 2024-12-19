@@ -37,6 +37,7 @@ model:
       class_path: vocos.feature_extractors.CosyvoiceFeatures
       init_args:
         onnx_model: /home/zhou/data3/tts/CosyVoice/pretrained_models/CosyVoice2-0.5B/speech_tokenizer_v2.onnx
+
     backbone:
       class_path: vocos.models.VocosBackbone
       init_args:
@@ -45,6 +46,7 @@ model:
         intermediate_dim: 1152
         num_layers: 8
         adanorm_num_embeddings: 0  # len(bandwidths)
+
     head:
       class_path: vocos.heads.SnacHead
       init_args:
