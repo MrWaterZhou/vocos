@@ -44,7 +44,7 @@ model:
         input_channels: 768
         dim: 768
         intermediate_dim: 1152
-        num_layers: 8
+        num_layers: 2
 
     head:
       class_path: vocos.heads.SnacHead
