@@ -54,7 +54,7 @@ model:
         rates: [8, 6, 5, 4]
         noise: False
         depthwise: True
-        attn_window_size: 5
+        attn_window_size: None
 
 
 trainer:
