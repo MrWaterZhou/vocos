@@ -25,9 +25,8 @@ class FourierHead(nn.Module):
 
 
 class SnacHead(FourierHead):
-    def __int__(self, input_channel: int = 768, channels: int = 1024, rates: list = [8, 6, 5, 4], noise: bool = False,
-                depthwise: bool = True,
-                attn_window_size: int = 5):
+    def __init__(self, input_channel: int = 768, channels: int = 1024, rates: list = [8, 6, 5, 4], noise: bool = False,
+                depthwise: bool = True,attn_window_size: int = 5):
         super().__init__()
         self.decoder = Decoder(input_channel=input_channel, channels=channels, rates=rates, noise=noise,
                                depthwise=depthwise,
