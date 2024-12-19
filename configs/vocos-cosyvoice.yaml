@@ -6,14 +6,14 @@ data:
   init_args:
     train_params:
       filelist_path: /home/zhou/data3/tts/vocos/dataset/train.txt
-      sampling_rate: 16000
+      sampling_rate: 24000
       num_samples: 16000
       batch_size: 32
       num_workers: 8
 
     val_params:
       filelist_path: /home/zhou/data3/tts/vocos/dataset/eval.txt
-      sampling_rate: 16000
+      sampling_rate: 24000
       num_samples: 48000
       batch_size: 15
       num_workers: 8
@@ -21,7 +21,7 @@ data:
 model:
   class_path: vocos.experiment.VocosCosyvoiceExp
   init_args:
-    sample_rate: 16000
+    sample_rate: 24000
     initial_learning_rate: 1e-3
     mel_loss_coeff: 45
     mrd_loss_coeff: 1.0
@@ -51,7 +51,7 @@ model:
       init_args:
         input_channel: 768
         channels: 1024
-        rates: [8, 5, 4, 4]
+        rates: [8, 6, 5, 4]
         noise: False
         depthwise: True
         attn_window_size: 5
