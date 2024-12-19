@@ -14,9 +14,9 @@ data:
     val_params:
       filelist_path: /home/zhou/data3/tts/vocos/dataset/eval.txt
       sampling_rate: 24000
-      num_samples: 48000
-      batch_size: 15
-      num_workers: 8
+      num_samples: 72000
+      batch_size: 1
+      num_workers: 1
 
 model:
   class_path: vocos.experiment.VocosCosyvoiceExp
@@ -79,7 +79,7 @@ trainer:
   # This equals to 1M steps per generator and 1M per discriminator
   max_steps: 2000000
   # You might want to limit val batches when evaluating all the metrics, as they are time-consuming
-  limit_val_batches: 30
+  limit_val_batches: 300
   accelerator: gpu
   strategy: ddp
   devices: [ 0,1 ]
