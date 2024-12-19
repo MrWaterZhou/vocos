@@ -50,7 +50,7 @@ model:
     head:
       class_path: vocos.heads.SnacHead
       init_args:
-        input_channel: 768
+        input_channels: 768
         channels: 1024
         rates: [8, 5, 4, 4]
         noise: False
