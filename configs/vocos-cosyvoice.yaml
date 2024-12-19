@@ -50,7 +50,7 @@ model:
       init_args:
         input_channel: 768
         channels: 1024
-        rates: [8, 6, 5, 4]
+        rates: [8, 5, 4, 4]
         noise: False
         depthwise: True
         attn_window_size: 5
