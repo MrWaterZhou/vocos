@@ -89,7 +89,7 @@ class CosyvoiceDataset(Dataset):
             start_idx = 0
             end_idx = start_idx + int(self.num_samples / self.sampling_rate * 25)
             speech_token = speech_token[:, start_idx:end_idx]
-            y = y[:, self.num_samples]
+            y = y[:, :self.num_samples]
 
         speech_token = torch.tensor(speech_token[0], dtype=torch.int32)
         speaker_embedding = torch.tensor(sample['embedding'][0], dtype=torch.float32)
