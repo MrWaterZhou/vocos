@@ -338,6 +338,5 @@ class CosyvoiceVocos(nn.Module):
     def codes_to_audio(self, codes: torch.Tensor) -> torch.Tensor:
 
         features = torch.nn.functional.embedding(codes, self.feature_extractor.codebook.weight)
-        bandwidth_id = torch.tensor([0]).to(features.device)
-        audio_hat = self.head(self.backbone(features, bandwidth_id=bandwidth_id))
+        audio_hat = self.head(self.backbone(features))
         return audio_hat
