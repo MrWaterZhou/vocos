@@ -51,7 +51,7 @@ class CosyVoice:
             for x in data['audio']:
                 r = self.preprocess_prompt_audio(x)
                 if r is not None:
-                    tmp = {"audio": r[0], 'speech_token': r[1], 'embedding': r[1]}
+                    tmp = {"audio": r[0], 'speech_token': r[1], 'embedding': r[2]}
                     f.write(json.dumps(tmp, ensure_ascii=False) + '\n')
 
 
