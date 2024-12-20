@@ -2,7 +2,7 @@
 seed_everything: 4444
 
 data:
-  class_path: vocos.dataset.VocosDataModule
+  class_path: vocos.dataset.CosyvoiceDataModule
   init_args:
     train_params:
       filelist_path: /home/zhou/data3/tts/vocos/dataset/train.txt

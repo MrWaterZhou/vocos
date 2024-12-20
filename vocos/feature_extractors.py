@@ -9,6 +9,7 @@ from encodec import EncodecModel
 from snac import SNAC
 import whisper
 from vocos.modules import safe_log
+import torch.nn.functional as F
 
 
 class ONNXMultiInputDynamicWrapper(nn.Module):
@@ -206,7 +207,17 @@ class CosyvoiceFeatures(FeatureExtractor):
         super().__init__()
         self.tokenizer_model = None
         self.codebook = nn.Embedding(6561, 768)
+        self.fc_speaker = torch.nn.Linear(192, 768)
+        self.fc_output = torch.nn.Linear(768, 768)
         self.onnx_model = onnx_model
+
+    def fuse(self, codes, speaker_embedding):
+        speech_proj = self.codebook(codes)
+        speaker_embedding = F.normalize(speaker_embedding, dim=1)
+
+        speaker_proj = self.fc_speaker(speaker_embedding).unsqueeze(1)  # (1, 1, hidden_dim)
+        fused = torch.tanh(speaker_proj + speech_proj)  # (1, T, hidden_dim)
+        return self.fc_output(fused)  # (1, T, speech_dim)
 
     @torch.no_grad()
     def get_codes(self, audio_data):
@@ -224,8 +235,11 @@ class CosyvoiceFeatures(FeatureExtractor):
         return codes
 
     def forward(self, audio: torch.Tensor, **kwargs):
-        codes = self.get_codes(audio)
-        features = torch.nn.functional.embedding(codes, self.codebook.weight)
+        codes = kwargs.get('speech_token', None)
+        speaker_embedding = kwargs.get('speaker_embedding', None)
+        if codes is None:
+            codes = self.get_codes(audio)
+        features = self.fuse(codes, speaker_embedding)
         return features.transpose(1, 2)
 
 
