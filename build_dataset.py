@@ -23,7 +23,7 @@ class CosyVoice:
         audio_24k = torchaudio.functional.resample(audio, sr, 24000)
         client = self.triton_client
         # Create inputs for the model
-        audio_input = grpcclient.InferInput("audio_16k", audio_16k.shape, "FP32")
+        audio_input = grpcclient.InferInput("audio", audio_16k.shape, "FP32")
         audio_input.set_data_from_numpy(audio_16k)
 
         # Prepare the output request
