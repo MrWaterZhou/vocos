@@ -26,7 +26,7 @@ model:
     mel_loss_coeff: 45
     mrd_loss_coeff: 1.0
     num_warmup_steps: 0 # Optimizers warmup steps
-    pretrain_mel_steps: 100  # 0 means GAN objective from the first iteration
+    pretrain_mel_steps: 300  # 0 means GAN objective from the first iteration
 
     # automatic evaluation
     evaluate_utmos: true
