@@ -17,7 +17,7 @@ class CosyVoice:
         audio, sr = torchaudio.load(audio_path)
         audio = audio[:, :(audio.shape[1] // sr) * sr]
         print(audio.shape)
-        if audio.shape[1] // sr < 1:
+        if audio.shape[1] // sr < 3:
             return None
         audio_16k = torchaudio.functional.resample(audio, sr, 16000).cpu().numpy()
         audio_24k = torchaudio.functional.resample(audio, sr, 24000)
