@@ -16,6 +16,7 @@ class CosyVoice:
     def preprocess_prompt_audio(self, audio_path: str):
         audio, sr = torchaudio.load(audio_path)
         audio = audio[:, (audio.shape[1] // sr) * sr]
+        print(audio.shape)
         if audio.shape[1] // sr < 1:
             return None
         try:
