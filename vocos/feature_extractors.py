@@ -260,9 +260,10 @@ class CosyvoiceEncoder(FeatureExtractor):
 
     ):
         super().__init__()
+        self.onnx_model = onnx_model
         self.tokenizer_model = None
         self.flow = CausalMaskedDiffWithXvec()
-        self.flow.load_state_dict(torch.load(embedding_path, map_location='cpu', strict=False))
+        self.flow.load_state_dict(torch.load(embedding_path, map_location='cpu'), strict=False)
         self.flow_encoder = None
         self.encoder_jit_path = encoder_jit_path
 
