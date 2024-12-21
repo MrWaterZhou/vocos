@@ -243,6 +243,69 @@ class CosyvoiceFeatures(FeatureExtractor):
         return features.transpose(1, 2)
 
 
+class CausalMaskedDiffWithXvec(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.input_embedding = nn.Embedding(6561, 512)
+        self.spk_embed_affine_layer = torch.nn.Linear(192, 80)
+        self.encoder_proj = torch.nn.Linear(512, 80)
+
+
+class CosyvoiceEncoder(FeatureExtractor):
+    def __init__(
+            self,
+            onnx_model: str = "/home/zhou/data3/tts/CosyVoice/pretrained_models/CosyVoice2-0.5B/speech_tokenizer_v2.onnx",
+            encoder_jit_path: str = '/home/zhou/data3/tts/CosyVoice/pretrained_models/CosyVoice2-0.5B/flow.encoder.fp32.zip',
+            embedding_path: str = '/home/zhou/data3/tts/CosyVoice/pretrained_models/CosyVoice2-0.5B/embedding.pt'
+
+    ):
+        super().__init__()
+        self.tokenizer_model = None
+        self.flow = CausalMaskedDiffWithXvec()
+        self.flow.load_state_dict(torch.load(embedding_path, map_location='cpu', strict=False))
+        self.flow_encoder = None
+        self.encoder_jit_path = encoder_jit_path
+
+    @torch.no_grad()
+    def fuse(self, codes, speaker_embedding):
+        token = self.flow.input_embedding(torch.clamp(codes, min=0))
+        token_len = torch.tensor([codes.size(1)] * codes.size(0), dtype=torch.int32).to(codes.device)
+        h, _ = self.flow_encoder(token, token_len)
+        speech_proj = self.flow.encoder_proj(h)  # batch,T,dim
+
+        embedding = F.normalize(speaker_embedding, dim=1)
+        speaker_proj = self.flow.spk_embed_affine_layer(embedding).unsqueeze(1)
+        fused = torch.tanh(speaker_proj + speech_proj)
+        return fused
+
+    @torch.no_grad()
+    def get_codes(self, audio_data):
+        if self.tokenizer_model is None:
+            self.tokenizer_model = ONNXMultiInputDynamicWrapper(self.onnx_model)
+        audio_data = torchaudio.functional.resample(audio_data, 24000, 16000)
+        feats = whisper.log_mel_spectrogram(audio_data, n_mels=128)
+        feats_length = np.array([feats.shape[2]], dtype=np.int32)
+        feats_length = torch.from_numpy(feats_length).to(audio_data.device)
+        codes = []
+        for x in feats:
+            y = self.tokenizer_model(x[None], feats_length)
+            codes.append(y)
+        codes = torch.cat(codes)
+        return codes
+
+    def forward(self, audio: torch.Tensor, **kwargs):
+        codes = kwargs.get('speech_token', None)
+        speaker_embedding = kwargs.get('speaker_embedding', None)
+        if codes is None:
+            codes = self.get_codes(audio)
+        if self.flow_encoder is None:
+            self.flow_encoder = torch.jit.load(self.encoder_jit_path, map_location=codes.device)
+        self.flow_encoder.eval()
+        self.flow.eval()
+        features = self.fuse(codes, speaker_embedding)
+        return features.transpose(1, 2)
+
+
 if __name__ == '__main__':
     m1 = EncodecFeatures()
     m2 = SnacFeatures()
