@@ -10,7 +10,7 @@ from snac import SNAC
 import whisper
 from vocos.modules import safe_log
 import torch.nn.functional as F
-from vocos import CosyvoiceVocos
+from vocos.pretrained import CosyvoiceVocos
 
 
 class ONNXMultiInputDynamicWrapper(nn.Module):
