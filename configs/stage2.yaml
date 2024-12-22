@@ -37,8 +37,8 @@ model:
       class_path: vocos.feature_extractors.MelSpectrogramFeaturesStage2
       init_args:
         sample_rate: 24000
-        n_fft: 2048
-        hop_length: 256
+        n_fft: 1920
+        hop_length: 240
         n_mels: 100
         padding: center
 
@@ -54,8 +54,8 @@ model:
       class_path: vocos.heads.ISTFTHead
       init_args:
         dim: 512
-        n_fft: 2048
-        hop_length: 256
+        n_fft: 1920
+        hop_length: 240
         padding: center
 
 
