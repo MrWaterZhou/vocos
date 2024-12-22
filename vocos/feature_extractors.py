@@ -10,6 +10,7 @@ from snac import SNAC
 import whisper
 from vocos.modules import safe_log
 import torch.nn.functional as F
+from vocos import CosyvoiceVocos
 
 
 class ONNXMultiInputDynamicWrapper(nn.Module):
@@ -305,6 +306,38 @@ class CosyvoiceEncoder(FeatureExtractor):
         self.flow.eval()
         features = self.fuse(codes, speaker_embedding)
         return features.transpose(1, 2)
+
+
+class MelSpectrogramFeaturesStage2(FeatureExtractor):
+    def __init__(self, sample_rate=24000, n_fft=1024, hop_length=256, n_mels=100, padding="center",
+                 stage1_model='/home/zhou/data3/tts/vocos/logs/lightning_logs/version_6'):
+        super().__init__()
+        if padding not in ["center", "same"]:
+            raise ValueError("Padding must be 'center' or 'same'.")
+        self.padding = padding
+        self.mel_spec = torchaudio.transforms.MelSpectrogram(
+            sample_rate=sample_rate,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            n_mels=n_mels,
+            center=padding == "center",
+            power=1,
+        )
+        self.stage1_model = CosyvoiceVocos.from_pretrained(stage1_model)
+
+    def forward(self, audio, **kwargs):
+        self.stage1_model.eval()
+        codes = kwargs.get('speech_token', None)
+        speaker_embedding = kwargs.get('speaker_embedding', None)
+        with torch.no_grad():
+            audio_hat = self.stage1_model(audio, speech_token=codes, speaker_embedding=speaker_embedding)
+
+        if self.padding == "same":
+            pad = self.mel_spec.win_length - self.mel_spec.hop_length
+            audio_hat = torch.nn.functional.pad(audio_hat, (pad // 2, pad // 2), mode="reflect")
+        mel = self.mel_spec(audio_hat)
+        features = safe_log(mel)
+        return features
 
 
 if __name__ == '__main__':
