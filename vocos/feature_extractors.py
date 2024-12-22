@@ -10,7 +10,7 @@ from snac import SNAC
 import whisper
 from vocos.modules import safe_log
 import torch.nn.functional as F
-from vocos.pretrained import CosyvoiceVocos
+# from vocos.pretrained import CosyvoiceVocos
 
 
 class ONNXMultiInputDynamicWrapper(nn.Module):
@@ -323,6 +323,7 @@ class MelSpectrogramFeaturesStage2(FeatureExtractor):
             center=padding == "center",
             power=1,
         )
+        from vocos.pretrained import CosyvoiceVocos
         self.stage1_model = CosyvoiceVocos.from_pretrained(stage1_model)
 
     def forward(self, audio, **kwargs):
