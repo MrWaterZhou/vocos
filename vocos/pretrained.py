@@ -353,5 +353,5 @@ class CosyvoiceVocos(nn.Module):
         self.forward = self.onnx_forward
         torch.onnx.export(self, (h, spk), save_path, input_names=['h', 'spk'], output_names=['audio'],
                           dynamic_axes={"h": {2: "time_steps"},
-                                        "audio": {"1": "audio_length"}},
+                                        "audio": {1: "audio_length"}},
                           opset_version=17)
