@@ -336,7 +336,22 @@ class CosyvoiceVocos(nn.Module):
 
     @torch.inference_mode()
     def codes_to_audio(self, codes: torch.Tensor) -> torch.Tensor:
-
         features = torch.nn.functional.embedding(codes, self.feature_extractor.codebook.weight)
         audio_hat = self.head(self.backbone(features))
         return audio_hat
+
+    @torch.inference_mode()
+    def onnx_forward(self, h: torch.Tensor, spk: torch.Tensor):
+        spk = spk.unsqueeze(2)
+        fused = torch.tanh(h + spk)
+        audio_output = self.decode(fused)
+        return audio_output
+
+    def export_to_onnx(self, save_path):
+        h = torch.rand(1, 80, 50).to(torch.float32)
+        spk = torch.rand(1, 80).to(torch.float32)
+        self.forward = self.onnx_forward
+        torch.onnx.export(self, (h, spk), save_path, input_names=['h', 'spk'], output_names=['audio'],
+                          dynamic_axes={"h": {2: "time_steps"},
+                                        "audio": {"1": "audio_length"}},
+                          opset_version=17)
