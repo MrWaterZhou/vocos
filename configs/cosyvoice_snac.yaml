@@ -19,7 +19,7 @@ data:
       num_workers: 1
 
 model:
-  class_path: vocos.experiment.VocosCosyvoiceExp
+  class_path: vocos.experiment.VocosSnacExp
   init_args:
     sample_rate: 24000
     initial_learning_rate: 5e-4
