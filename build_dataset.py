@@ -19,6 +19,8 @@ class CosyVoice:
         print(audio.shape)
         if audio.shape[1] // sr < 3:
             return None
+        if audio.shape[1] // sr > 20:
+            return None
         audio_16k = torchaudio.functional.resample(audio, sr, 16000).cpu().numpy()
         audio_24k = torchaudio.functional.resample(audio, sr, 24000)
         client = self.triton_client
@@ -47,11 +49,14 @@ class CosyVoice:
 
     def prepare_ds(self, file_path):
         data = load_dataset('json', data_files=file_path, split='train')
+        # data = data.filter(lambda x:x['correct'])
         with open(file_path + '.vocos.json', 'w', encoding='utf8') as f:
-            for x in data['audio']:
+            for sample in data:
+                x = sample['audio']
                 r = self.preprocess_prompt_audio(x)
+                emb = sample['embedding']
                 if r is not None:
-                    tmp = {"audio": r[0], 'speech_token': r[1], 'embedding': r[2]}
+                    tmp = {"audio": r[0], 'speech_token': r[1], 'embedding': emb}
                     f.write(json.dumps(tmp, ensure_ascii=False) + '\n')
 
 
