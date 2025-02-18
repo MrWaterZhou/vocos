@@ -7,7 +7,7 @@ data:
     train_params:
       filelist_path: /home/zhou/data3/tts/vocos/dataset/multilang.txt
       sampling_rate: 24000
-      num_samples: 16000
+      num_samples: 24000
       batch_size: 16
       num_workers: 8
 
