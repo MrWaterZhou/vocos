@@ -144,6 +144,15 @@ class Vocos(nn.Module):
 
         return features
 
+    def export_to_onnx(self, save_path):
+        feat = torch.rand(1, 80, 50).to(torch.float32)
+        self.forward = self.decode
+        torch.onnx.export(self, (feat, ), save_path, input_names=['feat'], output_names=['generated_speech'],
+                          dynamic_axes={"feat": {2: "time_steps"},
+                                        "generated_speech": {1: "audio_length"}},
+                          opset_version=17)
+
+
 
 class SnacVocos(nn.Module):
     """
