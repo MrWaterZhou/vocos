@@ -348,7 +348,7 @@ class CosyvoiceTokens(FeatureExtractor):
     def forward(self, audio: torch.Tensor, **kwargs):
         codes = kwargs.get('speech_token', None)
         features = self.codebook(codes)
-        z = torch.randn(192, dtype=features.dtype, device=features.device)
+        z = torch.randn((features.size(0),192), dtype=features.dtype, device=features.device)
         z = self.random_fc(z)
         features = features + z
         features = self.mix_fc(features)
