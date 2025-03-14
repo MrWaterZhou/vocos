@@ -59,6 +59,11 @@ class CosyvoiceDataModule(LightningDataModule):
         return self._get_dataloder(self.val_config, train=False)
 
 
+def pad_list_to_multiple_of_five(lst):
+    pad_count = (5 - len(lst) % 5) % 5  # 计算需要补充的 4299 个数
+    return lst + [4299] * pad_count  # 直接扩展列表
+
+
 class CosyvoiceDataset(Dataset):
     def __init__(self, cfg: DataConfig, train: bool):
         self.filelist = load_dataset('json', data_files=cfg.filelist_path, split='train')
@@ -76,7 +81,8 @@ class CosyvoiceDataset(Dataset):
         # speech_feat: (1,-1)
         # audio: str
         y, sr = torchaudio.load(sample['audio'])
-        speech_token = np.array(sample['speech_token'])
+        speech_token = pad_list_to_multiple_of_five(sample['speech_token'][0])
+        speech_token = np.array([speech_token])
         print(y.shape, speech_token.shape)
         if self.train:
             start_idx = np.random.randint(low=0, high=int(y.size(-1) / self.sampling_rate * 25) - int(
