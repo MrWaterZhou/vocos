@@ -337,6 +337,18 @@ class CosyvoiceFeatures(FeatureExtractor):
         return features.transpose(1, 2)
 
 
+class CosyvoiceTokens(FeatureExtractor):
+    def __init__(self):
+        super().__init__()
+        self.tokenizer_model = None
+        self.codebook = nn.Embedding(6561, 768)
+
+    def forward(self, audio: torch.Tensor, **kwargs):
+        codes = kwargs.get('speech_token', None)
+        features = self.codebook(codes)
+        return features.transpose(1, 2)
+
+
 class CausalMaskedDiffWithXvec(torch.nn.Module):
     def __init__(self):
         super().__init__()
