@@ -96,7 +96,7 @@ class CosyvoiceDataset(Dataset):
         else:
             speaker_embedding = torch.zeros(192, dtype=torch.float32)
 
-        print(y[0], speech_token, speaker_embedding)
+        print(y[0].shape, speech_token.shape, speaker_embedding.shape)
 
         return y[0], speech_token, speaker_embedding
 
