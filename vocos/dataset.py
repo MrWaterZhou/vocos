@@ -83,7 +83,6 @@ class CosyvoiceDataset(Dataset):
         y, sr = torchaudio.load(sample['audio'])
         speech_token = pad_list_to_multiple_of_five(sample['speech_token'][0])
         speech_token = np.array([speech_token])
-        print(y.shape, speech_token.shape)
         if self.train:
             start_idx = np.random.randint(low=0, high=int(y.size(-1) / self.sampling_rate * 25) - int(
                 self.num_samples / self.sampling_rate * 25) + 1)
