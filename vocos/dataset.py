@@ -94,7 +94,7 @@ class CosyvoiceDataset(Dataset):
         if 'embedding' in sample:
             speaker_embedding = torch.tensor(sample['embedding'][0], dtype=torch.float32)
         else:
-            speaker_embedding = torch.zeros((1, 192), dtype=torch.float32)
+            speaker_embedding = torch.zeros(192, dtype=torch.float32)
 
         return y[0], speech_token, speaker_embedding
 
