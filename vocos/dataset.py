@@ -97,7 +97,7 @@ class CosyvoiceDataset(Dataset):
 
 class VocosDataset(Dataset):
     def __init__(self, cfg: DataConfig, train: bool):
-        with open(cfg.filelist_path) as f:
+        with open(cfg.filelist_path, encoding='utf8') as f:
             self.filelist = f.read().splitlines()
         self.sampling_rate = cfg.sampling_rate
         self.num_samples = cfg.num_samples
