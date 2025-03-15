@@ -446,6 +446,7 @@ class Token2wav(nn.Module):
         z = self.feature_extractor.random_fc(z)
         features = features + z
         features = self.feature_extractor.mix_fc(features)
+        features = features.transpose(1, 2)
         audio_hat = self.head(self.backbone(features))
         return audio_hat
 
